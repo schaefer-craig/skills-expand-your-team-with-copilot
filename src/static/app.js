@@ -245,6 +245,9 @@ document.addEventListener("DOMContentLoaded", () => {
     
     if (darkModePreference === "enabled") {
       enableDarkMode();
+    } else {
+      // Default to light mode if no preference or explicitly disabled
+      disableDarkMode();
     }
   }
 
