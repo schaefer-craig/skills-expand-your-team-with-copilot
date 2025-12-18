@@ -29,6 +29,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const darkModeToggle = document.getElementById("dark-mode-toggle");
   const darkModeIcon = document.getElementById("dark-mode-icon");
 
+  // View mode elements
+  const filterModeBtn = document.getElementById("filter-mode-btn");
+  const groupModeBtn = document.getElementById("group-mode-btn");
+
   // Activity categories with corresponding colors
   const activityTypes = {
     sports: { label: "Sports", color: "#e8f5e9", textColor: "#2e7d32" },
@@ -44,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
+  let viewMode = "filter"; // "filter" or "group"
 
   // Authentication state
   let currentUser = null;
@@ -274,6 +279,21 @@ document.addEventListener("DOMContentLoaded", () => {
   // Event listener for dark mode toggle
   darkModeToggle.addEventListener("click", toggleDarkMode);
 
+  // Event listeners for view mode toggle
+  filterModeBtn.addEventListener("click", () => {
+    viewMode = "filter";
+    filterModeBtn.classList.add("active");
+    groupModeBtn.classList.remove("active");
+    displayFilteredActivities();
+  });
+
+  groupModeBtn.addEventListener("click", () => {
+    viewMode = "group";
+    groupModeBtn.classList.add("active");
+    filterModeBtn.classList.remove("active");
+    displayFilteredActivities();
+  });
+
   // Event listeners for authentication
   loginButton.addEventListener("click", openLoginModal);
   logoutButton.addEventListener("click", logout);
@@ -460,8 +480,9 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(allActivities).forEach(([name, details]) => {
       const activityType = getActivityType(name, details.description);
 
-      // Apply category filter
-      if (currentFilter !== "all" && activityType !== currentFilter) {
+      // In group mode, don't apply category filter (we want all categories)
+      // In filter mode, apply category filter as usual
+      if (viewMode === "filter" && currentFilter !== "all" && activityType !== currentFilter) {
         return;
       }
 
@@ -506,14 +527,83 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Display filtered activities
+    // Display activities based on view mode
+    if (viewMode === "group") {
+      displayGroupedActivities(filteredActivities);
+    } else {
+      // Display filtered activities in regular mode
+      Object.entries(filteredActivities).forEach(([name, details]) => {
+        renderActivityCard(name, details);
+      });
+    }
+  }
+
+  // Function to display activities grouped by category
+  function displayGroupedActivities(filteredActivities) {
+    // Group activities by their type
+    const groupedByCategory = {};
+    
     Object.entries(filteredActivities).forEach(([name, details]) => {
-      renderActivityCard(name, details);
+      const activityType = getActivityType(name, details.description);
+      
+      if (!groupedByCategory[activityType]) {
+        groupedByCategory[activityType] = [];
+      }
+      
+      groupedByCategory[activityType].push({ name, details });
+    });
+
+    // Sort categories to display in a consistent order
+    const categoryOrder = ["sports", "arts", "academic", "community", "technology"];
+    const sortedCategories = categoryOrder.filter(cat => groupedByCategory[cat]);
+
+    // Display each category group
+    sortedCategories.forEach((category) => {
+      const activities = groupedByCategory[category];
+      const typeInfo = activityTypes[category];
+      
+      // Create category group container
+      const groupContainer = document.createElement("div");
+      groupContainer.className = "category-group";
+      
+      // Create category header
+      const groupHeader = document.createElement("div");
+      groupHeader.className = "category-group-header";
+      groupHeader.style.background = `linear-gradient(135deg, ${typeInfo.textColor}, ${typeInfo.color})`;
+      groupHeader.innerHTML = `
+        <span>${typeInfo.label}</span>
+        <span class="count-badge">${activities.length}</span>
+      `;
+      
+      // Create activities container for this group
+      const groupActivitiesContainer = document.createElement("div");
+      groupActivitiesContainer.className = "category-group-activities";
+      
+      // Render each activity card in this group
+      activities.forEach(({ name, details }) => {
+        renderActivityCardToContainer(name, details, groupActivitiesContainer);
+      });
+      
+      groupContainer.appendChild(groupHeader);
+      groupContainer.appendChild(groupActivitiesContainer);
+      activitiesList.appendChild(groupContainer);
     });
   }
 
-  // Function to render a single activity card
+  // Helper function to render activity card to a specific container
+  function renderActivityCardToContainer(name, details, container) {
+    const activityCard = createActivityCardElement(name, details);
+    container.appendChild(activityCard);
+  }
+
+  // Function to render a single activity card to the main activities list
   function renderActivityCard(name, details) {
+    const activityCard = createActivityCardElement(name, details);
+    activitiesList.appendChild(activityCard);
+  }
+
+  // Function to create an activity card element
+  function createActivityCardElement(name, details) {
     const activityCard = document.createElement("div");
     activityCard.className = "activity-card";
 
@@ -664,7 +754,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    activitiesList.appendChild(activityCard);
+    return activityCard;
   }
 
   // Event listeners for search and filter
