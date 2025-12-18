@@ -552,6 +552,17 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="share-container">
+        <button class="share-button" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" data-schedule="${formattedSchedule.replace(/"/g, '&quot;')}" title="Share this activity">
+          📤 Share
+        </button>
+        <div class="share-menu hidden">
+          <button class="share-option" data-method="copy">📋 Copy Link</button>
+          <button class="share-option" data-method="email">✉️ Email</button>
+          <button class="share-option" data-method="twitter">🐦 Twitter</button>
+          <button class="share-option" data-method="facebook">📘 Facebook</button>
+        </div>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -586,6 +597,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add click handlers for share buttons
+    const shareButton = activityCard.querySelector(".share-button");
+    const shareMenu = activityCard.querySelector(".share-menu");
+    const shareOptions = activityCard.querySelectorAll(".share-option");
+
+    shareButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Close all other share menus
+      document.querySelectorAll(".share-menu").forEach((menu) => {
+        if (menu !== shareMenu) {
+          menu.classList.add("hidden");
+        }
+      });
+      // Toggle this menu
+      shareMenu.classList.toggle("hidden");
+    });
+
+    shareOptions.forEach((option) => {
+      option.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const method = option.dataset.method;
+        handleShare(method, name, details.description, formattedSchedule);
+        shareMenu.classList.add("hidden");
+      });
+    });
 
     activitiesList.appendChild(activityCard);
   }
@@ -853,6 +890,85 @@ document.addEventListener("DOMContentLoaded", () => {
       showMessage("Failed to sign up. Please try again.", "error");
       console.error("Error signing up:", error);
     }
+  });
+
+  // Handle sharing functionality
+  function handleShare(method, activityName, description, schedule) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}#${encodeURIComponent(activityName)}`;
+    const shareText = `Check out ${activityName} at Mergington High School!\n\n${description}\n\nSchedule: ${schedule}`;
+
+    switch (method) {
+      case "copy":
+        // Copy link to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard
+            .writeText(shareUrl)
+            .then(() => {
+              showMessage("Link copied to clipboard!", "success");
+            })
+            .catch((err) => {
+              console.error("Failed to copy:", err);
+              showMessage("Failed to copy link", "error");
+            });
+        } else {
+          // Fallback for browsers without clipboard API
+          const textArea = document.createElement("textarea");
+          textArea.value = shareUrl;
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand("copy");
+            showMessage("Link copied to clipboard!", "success");
+          } catch (err) {
+            console.error("Failed to copy:", err);
+            showMessage("Failed to copy link", "error");
+          }
+          document.body.removeChild(textArea);
+        }
+        break;
+
+      case "email":
+        // Open email client
+        const subject = encodeURIComponent(
+          `Join ${activityName} at Mergington High School!`
+        );
+        const body = encodeURIComponent(`${shareText}\n\nView details: ${shareUrl}`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        break;
+
+      case "twitter":
+        // Share on Twitter
+        const twitterText = encodeURIComponent(
+          `Check out ${activityName} at Mergington High School! ${shareUrl}`
+        );
+        window.open(
+          `https://twitter.com/intent/tweet?text=${twitterText}`,
+          "_blank",
+          "width=550,height=420"
+        );
+        break;
+
+      case "facebook":
+        // Share on Facebook
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+            shareUrl
+          )}`,
+          "_blank",
+          "width=550,height=420"
+        );
+        break;
+    }
+  }
+
+  // Close share menus when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".share-menu").forEach((menu) => {
+      menu.classList.add("hidden");
+    });
   });
 
   // Expose filter functions to window for future UI control
