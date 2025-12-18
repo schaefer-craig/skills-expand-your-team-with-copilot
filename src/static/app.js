@@ -553,8 +553,8 @@ document.addEventListener("DOMContentLoaded", () => {
       groupedByCategory[activityType].push({ name, details });
     });
 
-    // Sort categories to display in a consistent order
-    const categoryOrder = ["sports", "arts", "academic", "community", "technology"];
+    // Sort categories to display in a consistent order using the activityTypes object
+    const categoryOrder = Object.keys(activityTypes);
     const sortedCategories = categoryOrder.filter(cat => groupedByCategory[cat]);
 
     // Display each category group
@@ -566,10 +566,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const groupContainer = document.createElement("div");
       groupContainer.className = "category-group";
       
-      // Create category header
+      // Create category header with CSS class for styling
       const groupHeader = document.createElement("div");
-      groupHeader.className = "category-group-header";
-      groupHeader.style.background = `linear-gradient(135deg, ${typeInfo.textColor}, ${typeInfo.color})`;
+      groupHeader.className = `category-group-header ${category}`;
       groupHeader.innerHTML = `
         <span>${typeInfo.label}</span>
         <span class="count-badge">${activities.length}</span>
