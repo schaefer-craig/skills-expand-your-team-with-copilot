@@ -30,6 +30,48 @@
   --error-light: #ffebee;
   --info: #0c5460;
   --info-light: #d1ecf1;
+  
+  /* Tooltip colors */
+  --tooltip-bg: rgba(33, 33, 33, 0.95);
+  --tooltip-text: #ffffff;
+}
+
+/* Dark mode color palette */
+body.dark-mode {
+  /* Primary colors - adjusted for dark mode */
+  --primary: #5c6bc0;
+  --primary-light: #8e99f3;
+  --primary-dark: #26418f;
+  --primary-text: #ffffff;
+
+  /* Secondary colors - same as light mode */
+  --secondary: #ff6f00;
+  --secondary-light: #ffa040;
+  --secondary-dark: #c43e00;
+  --secondary-text: #ffffff;
+
+  /* Neutral colors - dark theme */
+  --background: #121212;
+  --surface: #1e1e1e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --border: #333333;
+  --border-light: #2a2a2a;
+  --border-focus: #444444;
+
+  /* Feedback colors - adjusted for dark mode */
+  --success: #66bb6a;
+  --success-light: #1b5e20;
+  --warning: #ffa726;
+  --warning-light: #663c00;
+  --error: #ef5350;
+  --error-light: #5f2120;
+  --info: #29b6f6;
+  --info-light: #014361;
+  
+  /* Tooltip colors */
+  --tooltip-bg: rgba(240, 240, 240, 0.95);
+  --tooltip-text: #333;
 }
 
 * {
@@ -233,6 +275,68 @@ section h3 {
   color: #c62828;
 }
 
+/* Share button container */
+.share-container {
+  position: relative;
+  margin: 8px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.share-button {
+  background-color: var(--background);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.share-button:hover {
+  background-color: var(--primary-light);
+  color: white;
+  border-color: var(--primary);
+}
+
+.share-menu {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 140px;
+  padding: 4px;
+}
+
+.share-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  background-color: transparent;
+  color: var(--text-primary);
+  border: none;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.share-option:hover {
+  background-color: var(--background);
+}
+
 /* Capacity Indicator */
 .capacity-container {
   margin: 8px 0;
@@ -335,8 +439,8 @@ button {
 
 .tooltip .tooltip-text {
   visibility: hidden;
-  background-color: rgba(33, 33, 33, 0.9);
-  color: #fff;
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-text);
   text-align: center;
   padding: 8px 12px;
   border-radius: 4px;
@@ -565,6 +669,106 @@ footer {
   font-size: 0.8rem;
 }
 
+/* View Mode Toggle */
+.view-mode-container {
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: var(--surface);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.view-mode-label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.view-mode-toggle {
+  display: flex;
+  gap: 6px;
+}
+
+.view-mode-btn {
+  flex: 1;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.view-mode-btn:hover {
+  background-color: var(--primary-light);
+  color: white;
+}
+
+.view-mode-btn.active {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary-dark);
+}
+
+/* Group view styles */
+.category-group {
+  margin-bottom: 25px;
+}
+
+.category-group-header {
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Category-specific header gradients */
+.category-group-header.sports {
+  background: linear-gradient(135deg, #2e7d32, #e8f5e9);
+}
+
+.category-group-header.arts {
+  background: linear-gradient(135deg, #7b1fa2, #f3e5f5);
+}
+
+.category-group-header.academic {
+  background: linear-gradient(135deg, #1565c0, #e3f2fd);
+}
+
+.category-group-header.community {
+  background: linear-gradient(135deg, #e65100, #fff3e0);
+}
+
+.category-group-header.technology {
+  background: linear-gradient(135deg, #3949ab, #e8eaf6);
+}
+
+.category-group-header .count-badge {
+  background-color: rgba(255, 255, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.category-group-activities {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
 .category-filters,
 .day-filters,
 .time-filters,
@@ -649,11 +853,66 @@ footer {
   position: absolute;
   top: 10px;
   right: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* View toggle buttons */
+#view-toggle {
+  display: flex;
+  gap: 5px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2px;
+}
+
+.view-toggle-btn {
+  background-color: transparent;
+  border: none;
+  border-radius: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  font-size: 1.2rem;
+}
+
+.view-toggle-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.view-toggle-btn.active {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 #user-status {
   display: flex;
   align-items: center;
+}
+
+/* Dark mode toggle button */
+#dark-mode-toggle {
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  font-size: 1.2rem;
+}
+
+#dark-mode-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
 }
 
 #user-info {
@@ -695,4 +954,179 @@ footer {
 
 #logout-button:hover {
   background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Calendar View Styles */
+#calendar-view {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.calendar-container {
+  min-width: 800px;
+  display: grid;
+  grid-template-columns: 80px repeat(7, 1fr);
+  gap: 1px;
+  background-color: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.calendar-header {
+  background-color: var(--primary);
+  color: var(--primary-text);
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.calendar-time-label {
+  background-color: var(--surface);
+  padding: 8px;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  border-right: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calendar-cell {
+  background-color: var(--surface);
+  min-height: 60px;
+  padding: 4px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calendar-activity {
+  background-color: var(--primary-light);
+  color: white;
+  padding: 4px 6px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.calendar-activity:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+}
+
+.calendar-activity-name {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.calendar-activity-enrollment {
+  font-size: 0.65rem;
+  opacity: 0.9;
+}
+
+/* Calendar activity colors by category */
+.calendar-activity.sports {
+  background: linear-gradient(135deg, #66bb6a, #4caf50);
+}
+
+.calendar-activity.arts {
+  background: linear-gradient(135deg, #ab47bc, #9c27b0);
+}
+
+.calendar-activity.academic {
+  background: linear-gradient(135deg, #42a5f5, #2196f3);
+}
+
+.calendar-activity.community {
+  background: linear-gradient(135deg, #ffa726, #ff9800);
+}
+
+.calendar-activity.technology {
+  background: linear-gradient(135deg, #5c6bc0, #3f51b5);
+}
+
+/* Tooltip for calendar activities */
+.calendar-activity-tooltip {
+  visibility: hidden;
+  position: absolute;
+  z-index: 1000;
+  background-color: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  width: 280px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  line-height: 1.4;
+}
+
+.calendar-activity:hover .calendar-activity-tooltip {
+  visibility: visible;
+}
+
+.calendar-activity-tooltip h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.9rem;
+  color: var(--tooltip-text);
+}
+
+.calendar-activity-tooltip p {
+  margin: 4px 0;
+  font-size: 0.75rem;
+}
+
+/* Handle multiple activities in same time slot */
+.calendar-cell.has-multiple {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 2px;
+}
+
+/* Empty state for calendar */
+.calendar-empty-state {
+  grid-column: 1 / -1;
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  background-color: var(--surface);
+}
+
+.calendar-empty-state h4 {
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+/* Responsive calendar adjustments */
+@media (max-width: 767px) {
+  .calendar-container {
+    min-width: 600px;
+    font-size: 0.75rem;
+  }
+  
+  .calendar-header {
+    font-size: 0.75rem;
+    padding: 6px;
+  }
+  
+  .calendar-time-label {
+    font-size: 0.65rem;
+    padding: 4px;
+  }
+  
+  .calendar-activity {
+    font-size: 0.65rem;
+    padding: 3px 4px;
+  }
 }

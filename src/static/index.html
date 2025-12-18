@@ -11,6 +11,17 @@
       <h1>Mergington High School</h1>
       <h2>Extracurricular Activities</h2>
       <div id="user-controls">
+        <div id="view-toggle">
+          <button id="card-view-btn" class="view-toggle-btn active" aria-label="Card view">
+            <span>📇</span>
+          </button>
+          <button id="calendar-view-btn" class="view-toggle-btn" aria-label="Calendar view">
+            <span>📅</span>
+          </button>
+        </div>
+        <button id="dark-mode-toggle" aria-label="Toggle dark mode">
+          <span id="dark-mode-icon">🌙</span>
+        </button>
         <div id="user-status">
           <button id="login-button" class="icon-button">
             <span class="user-icon">👤</span>
@@ -30,6 +41,16 @@
           <!-- Left Sidebar for Filters -->
           <aside class="sidebar-filters">
             <h3>Filter Activities</h3>
+            
+            <!-- View Mode Toggle -->
+            <div class="view-mode-container">
+              <label class="view-mode-label">View Mode:</label>
+              <div class="view-mode-toggle">
+                <button id="filter-mode-btn" class="view-mode-btn active">Filter</button>
+                <button id="group-mode-btn" class="view-mode-btn">Group By</button>
+              </div>
+            </div>
+            
             <!-- Search Box -->
             <div class="search-box">
               <input
@@ -128,6 +149,9 @@
             <div id="activities-list">
               <!-- Activities will be loaded here -->
               <p>Loading activities...</p>
+            </div>
+            <div id="calendar-view" class="hidden">
+              <!-- Calendar view will be rendered here -->
             </div>
             <div id="message" class="hidden message"></div>
           </div>

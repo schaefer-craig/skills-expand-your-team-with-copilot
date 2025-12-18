@@ -26,6 +26,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
 
+  // Dark mode elements
+  const darkModeToggle = document.getElementById("dark-mode-toggle");
+  const darkModeIcon = document.getElementById("dark-mode-icon");
+
+  // View mode elements
+  const filterModeBtn = document.getElementById("filter-mode-btn");
+  const groupModeBtn = document.getElementById("group-mode-btn");
+
   // Activity categories with corresponding colors
   const activityTypes = {
     sports: { label: "Sports", color: "#e8f5e9", textColor: "#2e7d32" },
@@ -42,6 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentDay = "";
   let currentTimeRange = "";
   let currentDifficulty = "";
+  let viewMode = "filter"; // "filter" or "group"
 
   // Authentication state
   let currentUser = null;
@@ -242,6 +251,57 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   }
 
+  // Dark mode functions
+  function initializeDarkMode() {
+    // Check if user has a saved preference
+    const darkModePreference = localStorage.getItem("darkMode");
+    
+    if (darkModePreference === "enabled") {
+      enableDarkMode();
+    } else {
+      // Default to light mode if no preference or explicitly disabled
+      disableDarkMode();
+    }
+  }
+
+  function enableDarkMode() {
+    document.body.classList.add("dark-mode");
+    darkModeIcon.textContent = "☀️";
+    localStorage.setItem("darkMode", "enabled");
+  }
+
+  function disableDarkMode() {
+    document.body.classList.remove("dark-mode");
+    darkModeIcon.textContent = "🌙";
+    localStorage.setItem("darkMode", "disabled");
+  }
+
+  function toggleDarkMode() {
+    if (document.body.classList.contains("dark-mode")) {
+      disableDarkMode();
+    } else {
+      enableDarkMode();
+    }
+  }
+
+  // Event listener for dark mode toggle
+  darkModeToggle.addEventListener("click", toggleDarkMode);
+
+  // Event listeners for view mode toggle
+  filterModeBtn.addEventListener("click", () => {
+    viewMode = "filter";
+    filterModeBtn.classList.add("active");
+    groupModeBtn.classList.remove("active");
+    displayFilteredActivities();
+  });
+
+  groupModeBtn.addEventListener("click", () => {
+    viewMode = "group";
+    groupModeBtn.classList.add("active");
+    filterModeBtn.classList.remove("active");
+    displayFilteredActivities();
+  });
+
   // Event listeners for authentication
   loginButton.addEventListener("click", openLoginModal);
   logoutButton.addEventListener("click", logout);
@@ -433,8 +493,9 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(allActivities).forEach(([name, details]) => {
       const activityType = getActivityType(name, details.description);
 
-      // Apply category filter
-      if (currentFilter !== "all" && activityType !== currentFilter) {
+      // In group mode, don't apply category filter (we want all categories)
+      // In filter mode, apply category filter as usual
+      if (viewMode === "filter" && currentFilter !== "all" && activityType !== currentFilter) {
         return;
       }
 
@@ -479,14 +540,82 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    // Display filtered activities
+    // Display activities based on view mode
+    if (viewMode === "group") {
+      displayGroupedActivities(filteredActivities);
+    } else {
+      // Display filtered activities in regular mode
+      Object.entries(filteredActivities).forEach(([name, details]) => {
+        renderActivityCard(name, details);
+      });
+    }
+  }
+
+  // Function to display activities grouped by category
+  function displayGroupedActivities(filteredActivities) {
+    // Group activities by their type
+    const groupedByCategory = {};
+    
     Object.entries(filteredActivities).forEach(([name, details]) => {
-      renderActivityCard(name, details);
+      const activityType = getActivityType(name, details.description);
+      
+      if (!groupedByCategory[activityType]) {
+        groupedByCategory[activityType] = [];
+      }
+      
+      groupedByCategory[activityType].push({ name, details });
+    });
+
+    // Sort categories to display in a consistent order using the activityTypes object
+    const categoryOrder = Object.keys(activityTypes);
+    const sortedCategories = categoryOrder.filter(cat => groupedByCategory[cat]);
+
+    // Display each category group
+    sortedCategories.forEach((category) => {
+      const activities = groupedByCategory[category];
+      const typeInfo = activityTypes[category];
+      
+      // Create category group container
+      const groupContainer = document.createElement("div");
+      groupContainer.className = "category-group";
+      
+      // Create category header with CSS class for styling
+      const groupHeader = document.createElement("div");
+      groupHeader.className = `category-group-header ${category}`;
+      groupHeader.innerHTML = `
+        <span>${typeInfo.label}</span>
+        <span class="count-badge">${activities.length}</span>
+      `;
+      
+      // Create activities container for this group
+      const groupActivitiesContainer = document.createElement("div");
+      groupActivitiesContainer.className = "category-group-activities";
+      
+      // Render each activity card in this group
+      activities.forEach(({ name, details }) => {
+        renderActivityCardToContainer(name, details, groupActivitiesContainer);
+      });
+      
+      groupContainer.appendChild(groupHeader);
+      groupContainer.appendChild(groupActivitiesContainer);
+      activitiesList.appendChild(groupContainer);
     });
   }
 
-  // Function to render a single activity card
+  // Helper function to render activity card to a specific container
+  function renderActivityCardToContainer(name, details, container) {
+    const activityCard = createActivityCardElement(name, details);
+    container.appendChild(activityCard);
+  }
+
+  // Function to render a single activity card to the main activities list
   function renderActivityCard(name, details) {
+    const activityCard = createActivityCardElement(name, details);
+    activitiesList.appendChild(activityCard);
+  }
+
+  // Function to create an activity card element
+  function createActivityCardElement(name, details) {
     const activityCard = document.createElement("div");
     activityCard.className = "activity-card";
 
@@ -579,6 +708,17 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      <div class="share-container">
+        <button class="share-button" data-activity="${name}" title="Share this activity">
+          📤 Share
+        </button>
+        <div class="share-menu hidden">
+          <button class="share-option" data-method="copy">📋 Copy Link</button>
+          <button class="share-option" data-method="email">✉️ Email</button>
+          <button class="share-option" data-method="twitter">🐦 Twitter</button>
+          <button class="share-option" data-method="facebook">📘 Facebook</button>
+        </div>
+      </div>
       <div class="activity-card-actions">
         ${
           currentUser
@@ -614,7 +754,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    activitiesList.appendChild(activityCard);
+    // Add click handlers for share buttons
+    const shareButton = activityCard.querySelector(".share-button");
+    const shareMenu = activityCard.querySelector(".share-menu");
+    const shareOptions = activityCard.querySelectorAll(".share-option");
+
+    shareButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      // Close all other share menus
+      document.querySelectorAll(".share-menu").forEach((menu) => {
+        if (menu !== shareMenu) {
+          menu.classList.add("hidden");
+        }
+      });
+      // Toggle this menu
+      shareMenu.classList.toggle("hidden");
+    });
+
+    shareOptions.forEach((option) => {
+      option.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const method = option.dataset.method;
+        handleShare(method, name, details.description, formattedSchedule);
+        shareMenu.classList.add("hidden");
+      });
+    });
+
+    return activityCard;
   }
 
   // Event listeners for search and filter
@@ -895,6 +1061,283 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // Handle sharing functionality
+  function handleShare(method, activityName, description, schedule) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}#${encodeURIComponent(activityName)}`;
+    const shareText = `Check out ${activityName} at Mergington High School!\n\n${description}\n\nSchedule: ${schedule}`;
+
+    switch (method) {
+      case "copy":
+        // Copy link to clipboard
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard
+            .writeText(shareUrl)
+            .then(() => {
+              showMessage("Link copied to clipboard!", "success");
+            })
+            .catch((err) => {
+              console.error("Failed to copy:", err);
+              showMessage("Failed to copy link. Please try again.", "error");
+            });
+        } else {
+          // Inform user that clipboard is not available
+          showMessage("Clipboard not available in your browser. Please copy the link manually: " + shareUrl, "info");
+        }
+        break;
+
+      case "email":
+        // Open email client
+        const subject = encodeURIComponent(
+          `Join ${activityName} at Mergington High School!`
+        );
+        const body = encodeURIComponent(`${shareText}\n\nView details: ${shareUrl}`);
+        window.location.href = `mailto:?subject=${subject}&body=${body}`;
+        break;
+
+      case "twitter":
+        // Share on Twitter
+        const twitterText = encodeURIComponent(
+          `Check out ${activityName} at Mergington High School! ${shareUrl}`
+        );
+        const twitterWindow = window.open(
+          `https://twitter.com/intent/tweet?text=${twitterText}`,
+          "_blank",
+          "width=550,height=420"
+        );
+        if (!twitterWindow || twitterWindow.closed || typeof twitterWindow.closed === "undefined") {
+          showMessage("Popup blocked. Please allow popups for this site to share on Twitter.", "error");
+        }
+        break;
+
+      case "facebook":
+        // Share on Facebook
+        const facebookWindow = window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+            shareUrl
+          )}`,
+          "_blank",
+          "width=550,height=420"
+        );
+        if (!facebookWindow || facebookWindow.closed || typeof facebookWindow.closed === "undefined") {
+          showMessage("Popup blocked. Please allow popups for this site to share on Facebook.", "error");
+        }
+        break;
+    }
+  }
+
+  // Close share menus when clicking outside
+  document.addEventListener("click", () => {
+    document.querySelectorAll(".share-menu").forEach((menu) => {
+      menu.classList.add("hidden");
+    });
+  });
+
+  // View management
+  const cardViewBtn = document.getElementById("card-view-btn");
+  const calendarViewBtn = document.getElementById("calendar-view-btn");
+  const activitiesListView = document.getElementById("activities-list");
+  const calendarViewContainer = document.getElementById("calendar-view");
+  let currentView = "card"; // "card" or "calendar"
+
+  // Calendar view configuration
+  const CALENDAR_START_HOUR = 6;  // 6 AM
+  const CALENDAR_END_HOUR = 18;   // 6 PM
+  const CALENDAR_SLOT_MINUTES = 30;
+
+  // Switch between card and calendar view
+  function switchView(view) {
+    currentView = view;
+    
+    if (view === "card") {
+      cardViewBtn.classList.add("active");
+      calendarViewBtn.classList.remove("active");
+      activitiesListView.classList.remove("hidden");
+      calendarViewContainer.classList.add("hidden");
+    } else {
+      cardViewBtn.classList.remove("active");
+      calendarViewBtn.classList.add("active");
+      activitiesListView.classList.add("hidden");
+      calendarViewContainer.classList.remove("hidden");
+      renderCalendarView();
+    }
+  }
+
+  // Event listeners for view toggle
+  cardViewBtn.addEventListener("click", () => switchView("card"));
+  calendarViewBtn.addEventListener("click", () => switchView("calendar"));
+
+  // Render calendar view
+  function renderCalendarView() {
+    // Define time slots based on configuration
+    const timeSlots = [];
+    for (let hour = CALENDAR_START_HOUR; hour <= CALENDAR_END_HOUR; hour++) {
+      for (let minute = 0; minute < 60; minute += CALENDAR_SLOT_MINUTES) {
+        if (hour === CALENDAR_END_HOUR && minute > 0) break; // Stop at end hour
+        const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const hour12 = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const time12 = `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
+        timeSlots.push({ time24, time12 });
+      }
+    }
+
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Create calendar structure
+    let calendarHTML = '<div class="calendar-container">';
+    
+    // Header row
+    calendarHTML += '<div class="calendar-header">Time</div>';
+    days.forEach(day => {
+      calendarHTML += `<div class="calendar-header">${day}</div>`;
+    });
+    
+    // Filter activities based on current filters
+    let filteredActivities = {};
+    Object.entries(allActivities).forEach(([name, details]) => {
+      const activityType = getActivityType(name, details.description);
+      
+      // Apply category filter
+      if (currentFilter !== "all" && activityType !== currentFilter) {
+        return;
+      }
+      
+      // Apply weekend filter if selected
+      if (currentTimeRange === "weekend" && details.schedule_details) {
+        const activityDays = details.schedule_details.days;
+        const isWeekendActivity = activityDays.some((day) =>
+          timeRanges.weekend.days.includes(day)
+        );
+        
+        if (!isWeekendActivity) {
+          return;
+        }
+      }
+      
+      // Apply search filter
+      const searchableContent = [
+        name.toLowerCase(),
+        details.description.toLowerCase(),
+        formatSchedule(details).toLowerCase(),
+      ].join(" ");
+      
+      if (searchQuery && !searchableContent.includes(searchQuery.toLowerCase())) {
+        return;
+      }
+      
+      filteredActivities[name] = details;
+    });
+
+    // Check if there are any activities
+    if (Object.keys(filteredActivities).length === 0) {
+      calendarHTML += `
+        <div class="calendar-empty-state">
+          <h4>No activities found</h4>
+          <p>Try adjusting your search or filter criteria</p>
+        </div>
+      `;
+      calendarHTML += '</div>';
+      calendarViewContainer.innerHTML = calendarHTML;
+      return;
+    }
+    
+    // Create time slot rows
+    timeSlots.forEach(slot => {
+      calendarHTML += `<div class="calendar-time-label">${slot.time12}</div>`;
+      
+      days.forEach(day => {
+        // Find activities for this day and time slot
+        const activitiesInSlot = [];
+        
+        Object.entries(filteredActivities).forEach(([name, details]) => {
+          if (!details.schedule_details) return;
+          
+          const activityDays = details.schedule_details.days;
+          const startTime = details.schedule_details.start_time;
+          const endTime = details.schedule_details.end_time;
+          
+          // Check if activity is on this day
+          if (!activityDays.includes(day)) return;
+          
+          // Check if activity overlaps with this time slot
+          const slotEnd = addMinutes(slot.time24, CALENDAR_SLOT_MINUTES);
+          // Activity overlaps if it starts before slot ends AND ends after slot starts
+          if (startTime < slotEnd && endTime > slot.time24) {
+            activitiesInSlot.push({ name, details });
+          }
+        });
+        
+        // Render the cell
+        const hasMultiple = activitiesInSlot.length > 1;
+        calendarHTML += `<div class="calendar-cell ${hasMultiple ? 'has-multiple' : ''}">`;
+        
+        activitiesInSlot.forEach(({ name, details }) => {
+          const activityType = getActivityType(name, details.description);
+          const totalSpots = details.max_participants;
+          const takenSpots = details.participants.length;
+          const spotsLeft = totalSpots - takenSpots;
+          
+          calendarHTML += `
+            <div class="calendar-activity ${activityType}" data-activity="${name}">
+              <div class="calendar-activity-name">${name}</div>
+              <div class="calendar-activity-enrollment">${takenSpots}/${totalSpots} enrolled</div>
+              <div class="calendar-activity-tooltip">
+                <h4>${name}</h4>
+                <p><strong>Time:</strong> ${formatSchedule(details)}</p>
+                <p><strong>Description:</strong> ${details.description}</p>
+                <p><strong>Enrollment:</strong> ${takenSpots}/${totalSpots} (${spotsLeft} spots left)</p>
+              </div>
+            </div>
+          `;
+        });
+        
+        calendarHTML += '</div>';
+      });
+    });
+    
+    calendarHTML += '</div>';
+    calendarViewContainer.innerHTML = calendarHTML;
+    
+    // Add click handlers to calendar activities
+    const calendarActivities = calendarViewContainer.querySelectorAll('.calendar-activity');
+    calendarActivities.forEach(activity => {
+      activity.addEventListener('click', (e) => {
+        const activityName = activity.dataset.activity;
+        if (currentUser) {
+          const activityDetails = allActivities[activityName];
+          const isFull = activityDetails.participants.length >= activityDetails.max_participants;
+          if (!isFull) {
+            openRegistrationModal(activityName);
+          }
+        } else {
+          showMessage('Please log in as a teacher to register students.', 'info');
+        }
+      });
+    });
+  }
+
+  // Helper function to add minutes to a time string
+  function addMinutes(time24, minutes) {
+    const [hours, mins] = time24.split(':').map(Number);
+    const totalMinutes = hours * 60 + mins + minutes;
+    const newHours = Math.floor(totalMinutes / 60);
+    const newMins = totalMinutes % 60;
+    return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
+  }
+
+  // Store original function and wrap it to also update calendar view
+  const originalDisplayFilteredActivities = displayFilteredActivities;
+  function updateActivitiesDisplay() {
+    originalDisplayFilteredActivities();
+    if (currentView === "calendar") {
+      renderCalendarView();
+    }
+  }
+  
+  // Replace the function reference
+  displayFilteredActivities = updateActivitiesDisplay;
+
   // Expose filter functions to window for future UI control
   window.activityFilters = {
     setDayFilter,
@@ -902,6 +1345,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Initialize app
+  initializeDarkMode();
   checkAuthentication();
   initializeFilters();
   fetchActivities();
