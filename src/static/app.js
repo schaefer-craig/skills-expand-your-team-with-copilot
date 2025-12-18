@@ -553,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
       </div>
       <div class="share-container">
-        <button class="share-button" data-activity="${name}" data-description="${details.description.replace(/"/g, '&quot;')}" data-schedule="${formattedSchedule.replace(/"/g, '&quot;')}" title="Share this activity">
+        <button class="share-button" data-activity="${name}" title="Share this activity">
           📤 Share
         </button>
         <div class="share-menu hidden">
@@ -909,24 +909,11 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch((err) => {
               console.error("Failed to copy:", err);
-              showMessage("Failed to copy link", "error");
+              showMessage("Failed to copy link. Please try again.", "error");
             });
         } else {
-          // Fallback for browsers without clipboard API
-          const textArea = document.createElement("textarea");
-          textArea.value = shareUrl;
-          textArea.style.position = "fixed";
-          textArea.style.left = "-999999px";
-          document.body.appendChild(textArea);
-          textArea.select();
-          try {
-            document.execCommand("copy");
-            showMessage("Link copied to clipboard!", "success");
-          } catch (err) {
-            console.error("Failed to copy:", err);
-            showMessage("Failed to copy link", "error");
-          }
-          document.body.removeChild(textArea);
+          // Inform user that clipboard is not available
+          showMessage("Clipboard not available in your browser. Please copy the link manually: " + shareUrl, "info");
         }
         break;
 
@@ -944,22 +931,28 @@ document.addEventListener("DOMContentLoaded", () => {
         const twitterText = encodeURIComponent(
           `Check out ${activityName} at Mergington High School! ${shareUrl}`
         );
-        window.open(
+        const twitterWindow = window.open(
           `https://twitter.com/intent/tweet?text=${twitterText}`,
           "_blank",
           "width=550,height=420"
         );
+        if (!twitterWindow || twitterWindow.closed || typeof twitterWindow.closed === "undefined") {
+          showMessage("Popup blocked. Please allow popups for this site to share on Twitter.", "error");
+        }
         break;
 
       case "facebook":
         // Share on Facebook
-        window.open(
+        const facebookWindow = window.open(
           `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
             shareUrl
           )}`,
           "_blank",
           "width=550,height=420"
         );
+        if (!facebookWindow || facebookWindow.closed || typeof facebookWindow.closed === "undefined") {
+          showMessage("Popup blocked. Please allow popups for this site to share on Facebook.", "error");
+        }
         break;
     }
   }
