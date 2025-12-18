@@ -11,6 +11,14 @@
       <h1>Mergington High School</h1>
       <h2>Extracurricular Activities</h2>
       <div id="user-controls">
+        <div id="view-toggle">
+          <button id="card-view-btn" class="view-toggle-btn active" aria-label="Card view">
+            <span>📇</span>
+          </button>
+          <button id="calendar-view-btn" class="view-toggle-btn" aria-label="Calendar view">
+            <span>📅</span>
+          </button>
+        </div>
         <button id="dark-mode-toggle" aria-label="Toggle dark mode">
           <span id="dark-mode-icon">🌙</span>
         </button>
@@ -109,6 +117,9 @@
             <div id="activities-list">
               <!-- Activities will be loaded here -->
               <p>Loading activities...</p>
+            </div>
+            <div id="calendar-view" class="hidden">
+              <!-- Calendar view will be rendered here -->
             </div>
             <div id="message" class="hidden message"></div>
           </div>

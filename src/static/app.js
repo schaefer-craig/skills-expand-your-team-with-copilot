@@ -1004,6 +1004,202 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // View management
+  const cardViewBtn = document.getElementById("card-view-btn");
+  const calendarViewBtn = document.getElementById("calendar-view-btn");
+  const activitiesListView = document.getElementById("activities-list");
+  const calendarViewContainer = document.getElementById("calendar-view");
+  let currentView = "card"; // "card" or "calendar"
+
+  // Switch between card and calendar view
+  function switchView(view) {
+    currentView = view;
+    
+    if (view === "card") {
+      cardViewBtn.classList.add("active");
+      calendarViewBtn.classList.remove("active");
+      activitiesListView.classList.remove("hidden");
+      calendarViewContainer.classList.add("hidden");
+    } else {
+      cardViewBtn.classList.remove("active");
+      calendarViewBtn.classList.add("active");
+      activitiesListView.classList.add("hidden");
+      calendarViewContainer.classList.remove("hidden");
+      renderCalendarView();
+    }
+  }
+
+  // Event listeners for view toggle
+  cardViewBtn.addEventListener("click", () => switchView("card"));
+  calendarViewBtn.addEventListener("click", () => switchView("calendar"));
+
+  // Render calendar view
+  function renderCalendarView() {
+    // Define time slots (6 AM to 6 PM in 30-minute increments)
+    const timeSlots = [];
+    for (let hour = 6; hour <= 18; hour++) {
+      for (let minute of [0, 30]) {
+        if (hour === 18 && minute === 30) break; // Stop at 6:00 PM
+        const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        const hour12 = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+        const period = hour >= 12 ? 'PM' : 'AM';
+        const time12 = `${hour12}:${minute.toString().padStart(2, '0')} ${period}`;
+        timeSlots.push({ time24, time12 });
+      }
+    }
+
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    // Create calendar structure
+    let calendarHTML = '<div class="calendar-container">';
+    
+    // Header row
+    calendarHTML += '<div class="calendar-header">Time</div>';
+    days.forEach(day => {
+      calendarHTML += `<div class="calendar-header">${day}</div>`;
+    });
+    
+    // Filter activities based on current filters
+    let filteredActivities = {};
+    Object.entries(allActivities).forEach(([name, details]) => {
+      const activityType = getActivityType(name, details.description);
+      
+      // Apply category filter
+      if (currentFilter !== "all" && activityType !== currentFilter) {
+        return;
+      }
+      
+      // Apply weekend filter if selected
+      if (currentTimeRange === "weekend" && details.schedule_details) {
+        const activityDays = details.schedule_details.days;
+        const isWeekendActivity = activityDays.some((day) =>
+          timeRanges.weekend.days.includes(day)
+        );
+        
+        if (!isWeekendActivity) {
+          return;
+        }
+      }
+      
+      // Apply search filter
+      const searchableContent = [
+        name.toLowerCase(),
+        details.description.toLowerCase(),
+        formatSchedule(details).toLowerCase(),
+      ].join(" ");
+      
+      if (searchQuery && !searchableContent.includes(searchQuery.toLowerCase())) {
+        return;
+      }
+      
+      filteredActivities[name] = details;
+    });
+
+    // Check if there are any activities
+    if (Object.keys(filteredActivities).length === 0) {
+      calendarHTML += `
+        <div class="calendar-empty-state">
+          <h4>No activities found</h4>
+          <p>Try adjusting your search or filter criteria</p>
+        </div>
+      `;
+      calendarHTML += '</div>';
+      calendarViewContainer.innerHTML = calendarHTML;
+      return;
+    }
+    
+    // Create time slot rows
+    timeSlots.forEach(slot => {
+      calendarHTML += `<div class="calendar-time-label">${slot.time12}</div>`;
+      
+      days.forEach(day => {
+        // Find activities for this day and time slot
+        const activitiesInSlot = [];
+        
+        Object.entries(filteredActivities).forEach(([name, details]) => {
+          if (!details.schedule_details) return;
+          
+          const activityDays = details.schedule_details.days;
+          const startTime = details.schedule_details.start_time;
+          const endTime = details.schedule_details.end_time;
+          
+          // Check if activity is on this day
+          if (!activityDays.includes(day)) return;
+          
+          // Check if activity overlaps with this time slot
+          const slotEnd = addMinutes(slot.time24, 30);
+          if (startTime <= slot.time24 && endTime > slot.time24) {
+            activitiesInSlot.push({ name, details });
+          }
+        });
+        
+        // Render the cell
+        const hasMultiple = activitiesInSlot.length > 1;
+        calendarHTML += `<div class="calendar-cell ${hasMultiple ? 'has-multiple' : ''}">`;
+        
+        activitiesInSlot.forEach(({ name, details }) => {
+          const activityType = getActivityType(name, details.description);
+          const totalSpots = details.max_participants;
+          const takenSpots = details.participants.length;
+          const spotsLeft = totalSpots - takenSpots;
+          
+          calendarHTML += `
+            <div class="calendar-activity ${activityType}" data-activity="${name}">
+              <div class="calendar-activity-name">${name}</div>
+              <div class="calendar-activity-enrollment">${takenSpots}/${totalSpots} enrolled</div>
+              <div class="calendar-activity-tooltip">
+                <h4>${name}</h4>
+                <p><strong>Time:</strong> ${formatSchedule(details)}</p>
+                <p><strong>Description:</strong> ${details.description}</p>
+                <p><strong>Enrollment:</strong> ${takenSpots}/${totalSpots} (${spotsLeft} spots left)</p>
+              </div>
+            </div>
+          `;
+        });
+        
+        calendarHTML += '</div>';
+      });
+    });
+    
+    calendarHTML += '</div>';
+    calendarViewContainer.innerHTML = calendarHTML;
+    
+    // Add click handlers to calendar activities
+    const calendarActivities = calendarViewContainer.querySelectorAll('.calendar-activity');
+    calendarActivities.forEach(activity => {
+      activity.addEventListener('click', (e) => {
+        const activityName = activity.dataset.activity;
+        if (currentUser) {
+          const activityDetails = allActivities[activityName];
+          const isFull = activityDetails.participants.length >= activityDetails.max_participants;
+          if (!isFull) {
+            openRegistrationModal(activityName);
+          }
+        } else {
+          showMessage('Please log in as a teacher to register students.', 'info');
+        }
+      });
+    });
+  }
+
+  // Helper function to add minutes to a time string
+  function addMinutes(time24, minutes) {
+    const [hours, mins] = time24.split(':').map(Number);
+    const totalMinutes = hours * 60 + mins + minutes;
+    const newHours = Math.floor(totalMinutes / 60);
+    const newMins = totalMinutes % 60;
+    return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
+  }
+
+  // Override displayFilteredActivities to also update calendar if in calendar view
+  const originalDisplayFilteredActivities = displayFilteredActivities;
+  displayFilteredActivities = function() {
+    originalDisplayFilteredActivities();
+    if (currentView === "calendar") {
+      renderCalendarView();
+    }
+  };
+
   // Expose filter functions to window for future UI control
   window.activityFilters = {
     setDayFilter,
