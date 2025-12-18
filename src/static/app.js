@@ -1011,6 +1011,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarViewContainer = document.getElementById("calendar-view");
   let currentView = "card"; // "card" or "calendar"
 
+  // Calendar view configuration
+  const CALENDAR_START_HOUR = 6;  // 6 AM
+  const CALENDAR_END_HOUR = 18;   // 6 PM
+  const CALENDAR_SLOT_MINUTES = 30;
+
   // Switch between card and calendar view
   function switchView(view) {
     currentView = view;
@@ -1035,11 +1040,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Render calendar view
   function renderCalendarView() {
-    // Define time slots (6 AM to 6 PM in 30-minute increments)
+    // Define time slots based on configuration
     const timeSlots = [];
-    for (let hour = 6; hour <= 18; hour++) {
-      for (let minute of [0, 30]) {
-        if (hour === 18 && minute === 30) break; // Stop at 6:00 PM
+    for (let hour = CALENDAR_START_HOUR; hour <= CALENDAR_END_HOUR; hour++) {
+      for (let minute = 0; minute < 60; minute += CALENDAR_SLOT_MINUTES) {
+        if (hour === CALENDAR_END_HOUR && minute > 0) break; // Stop at end hour
         const time24 = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         const hour12 = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
         const period = hour >= 12 ? 'PM' : 'AM';
@@ -1127,8 +1132,9 @@ document.addEventListener("DOMContentLoaded", () => {
           if (!activityDays.includes(day)) return;
           
           // Check if activity overlaps with this time slot
-          const slotEnd = addMinutes(slot.time24, 30);
-          if (startTime <= slot.time24 && endTime > slot.time24) {
+          const slotEnd = addMinutes(slot.time24, CALENDAR_SLOT_MINUTES);
+          // Activity overlaps if it starts before slot ends AND ends after slot starts
+          if (startTime < slotEnd && endTime > slot.time24) {
             activitiesInSlot.push({ name, details });
           }
         });
@@ -1191,14 +1197,17 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
   }
 
-  // Override displayFilteredActivities to also update calendar if in calendar view
+  // Store original function and wrap it to also update calendar view
   const originalDisplayFilteredActivities = displayFilteredActivities;
-  displayFilteredActivities = function() {
+  function updateActivitiesDisplay() {
     originalDisplayFilteredActivities();
     if (currentView === "calendar") {
       renderCalendarView();
     }
-  };
+  }
+  
+  // Replace the function reference
+  displayFilteredActivities = updateActivitiesDisplay;
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
